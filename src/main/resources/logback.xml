@@ -1,12 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Console appender for development -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-
+    
+    <!-- File appender for all logs -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>build/logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>build/logs/application.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- File appender for test logs - CLEARS ON EACH RUN -->
+    <appender name="TEST_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>build/test-logs/test-output.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Root logger configuration -->
     <root level="INFO">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </root>
+    
+    <!-- Test logger configuration -->
+    <logger name="com.github.nanachi357.exchanges.bybit" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="TEST_FILE" />
+    </logger>
+    
+    <!-- Capture all System.out and System.err - CLEARS ON EACH RUN -->
+    <appender name="SYSTEM_OUT" class="ch.qos.logback.core.FileAppender">
+        <file>build/test-logs/system-output.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [SYSTEM] %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Logger for System.out/err capture -->
+    <logger name="SystemOut" level="ALL" additivity="false">
+        <appender-ref ref="SYSTEM_OUT" />
+    </logger>
 </configuration>

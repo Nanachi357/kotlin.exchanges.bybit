@@ -7,7 +7,11 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import com.google.gson.GsonBuilder
 import com.github.nanachi357.exchanges.bybit.model.account.Account
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 object ApiUtils {
     private const val RECV_WINDOW = "5000"
@@ -114,13 +118,31 @@ object ApiUtils {
 
     /**
      * Generate signature for POST requests
-     * TODO: Implement when POST requests are needed
-     * TODO: Add JSON serialization (kotlinx-serialization instead of Gson)
      */
     fun genPostSign(body: Any?, subAccount: Account? = null): Map<String, String> {
-        // TODO: Implement POST signature generation
-        // TODO: Replace Gson with kotlinx-serialization
-        // TODO: Add proper JSON serialization
-        throw NotImplementedError("POST signature generation not implemented yet")
+        val timestamp = Date().time.toString()
+        // val gson = GsonBuilder().setPrettyPrinting().create()
+        // val json = gson.toJson(body)
+        val json = body.toString()  // Используем body как есть (уже JSON строка)
+
+        val apikey = subAccount?.api?.public ?: API_KEY
+        val secret = subAccount?.api?.secret ?: API_SECRET
+
+        val secretKeySpec = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), "HmacSHA256")
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(secretKeySpec)
+
+        val sb = "$timestamp$apikey$RECV_WINDOW$json"
+
+        val sign =
+            mac.doFinal(sb.toByteArray(StandardCharsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+
+        return mapOf(
+            "X-BAPI-API-KEY" to apikey,
+            "X-BAPI-TIMESTAMP" to timestamp,
+            "X-BAPI-RECV-WINDOW" to RECV_WINDOW,
+            "X-BAPI-SIGN" to sign
+        )
     }
 }
